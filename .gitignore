@@ -1,0 +1,30 @@
+# Node
+node_modules/
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log*
+
+# Env
+.env
+.env.*
+
+# Builds / caches
+dist/
+build/
+coverage/
+.cache/
+tmp/
+.tmp/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+
