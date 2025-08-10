@@ -49,15 +49,6 @@ pm2 save
 echo "🔧 Setting up PM2 startup..."
 pm2 startup
 
-# Copy nginx configuration
-echo "🌐 Setting up nginx configuration..."
-cp nginx.conf /etc/nginx/sites-available/$DOMAIN
-
-# Enable nginx site if not already enabled
-if [ ! -L "/etc/nginx/sites-enabled/$DOMAIN" ]; then
-    ln -s /etc/nginx/sites-available/$DOMAIN /etc/nginx/sites-enabled/
-fi
-
 # Test nginx configuration
 echo "🧪 Testing nginx configuration..."
 nginx -t
