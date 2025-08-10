@@ -9,12 +9,6 @@ PORT=3001
 
 echo "🚀 Starting deployment for $DOMAIN..."
 
-# Check if running as paintapp user or root
-if [[ $EUID -eq 0 ]]; then
-    echo "❌ Don't run this script as root. Run as paintapp user or create the user first."
-    exit 1
-fi
-
 # Install pm2 globally for process management
 if ! command -v pm2 &> /dev/null; then
     echo "📦 Installing PM2..."
@@ -91,6 +85,3 @@ echo "📋 Recent application logs:"
 pm2 logs $APP_NAME --lines 20
 
 echo "✅ Deployment completed successfully!"
-echo "🌐 Your app should be available at: http://$DOMAIN"
-echo "📊 Monitor with: pm2 monit"
-echo "📋 View logs with: pm2 logs $APP_NAME"
