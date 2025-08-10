@@ -31,7 +31,7 @@ echo "NODE_ENV=production" >> .env
 
 # Install dependencies
 echo "📦 Installing application dependencies..."
-pnpm install --production
+pnpm install --prod
 
 # Stop existing PM2 process if running
 echo "🛑 Stopping existing PM2 process..."
