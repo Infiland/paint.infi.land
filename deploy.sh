@@ -6,8 +6,10 @@ APP_NAME="paint-app"
 APP_DIR="/var/www/paint.infi.land"
 DOMAIN="paint.infi.land"
 PORT=3001
+BUILD_TIME=$(date -Iseconds)
 
 echo "🚀 Starting deployment for $DOMAIN..."
+echo "📅 Build time: $BUILD_TIME"
 
 # Install pnpm if not available
 if ! command -v pnpm &> /dev/null; then
@@ -36,30 +38,36 @@ cd $APP_DIR
 echo "🛑 Stopping existing PM2 process..."
 pm2 delete $APP_NAME 2>/dev/null || true
 
+# Handle git operations more robustly
 if [ -d .git ]; then
     echo "🔄 Updating code from git..."
     git fetch --all
-    git reset --hard
+    git reset --hard origin/$(git rev-parse --abbrev-ref HEAD) 2>/dev/null || git reset --hard HEAD
     git clean -fd
 else
-    echo "⚠️ No git repository found in $APP_DIR. Skipping git fetch/pull."
+    echo "⚠️ No git repository found in $APP_DIR"
+    echo "💡 Make sure to initialize git and pull your code first!"
 fi
 
-# Remove node_modules and clean install
-echo "🧹 Cleaning node_modules..."
-rm -rf node_modules
+# Remove node_modules and package-lock for clean install
+echo "🧹 Cleaning dependencies..."
+rm -rf node_modules pnpm-lock.yaml
 
 # Install dependencies with pnpm
 echo "📦 Installing application dependencies with pnpm..."
-pnpm install --frozen-lockfile --prod
+pnpm install --frozen-lockfile
 
-# Stop existing PM2 process if running
-echo "🛑 Stopping existing PM2 process..."
-pm2 delete $APP_NAME 2>/dev/null || true
+# Create/update .env file with proper environment variables
+echo "🔧 Setting up environment variables..."
+cat > .env << EOF
+PORT=$PORT
+NODE_ENV=production
+BUILD_TIME=$BUILD_TIME
+EOF
 
 # Start application with PM2
 echo "🚀 Starting application with PM2..."
-PORT="$PORT" NODE_ENV=production pm2 start server.js --name "$APP_NAME" --cwd "$APP_DIR"
+pm2 start server.js --name "$APP_NAME" --cwd "$APP_DIR" --env-file .env
 
 # Save PM2 configuration
 echo "💾 Saving PM2 configuration..."
@@ -82,15 +90,16 @@ echo "📊 Checking PM2 status..."
 pm2 status
 
 # Wait a moment and check if app is running
-sleep 2
+sleep 3
 if pm2 describe $APP_NAME > /dev/null 2>&1; then
     echo "✅ Application is running successfully!"
+    echo "📅 Build time: $BUILD_TIME"
 else
     echo "❌ Application failed to start. Check logs with: pm2 logs $APP_NAME"
     exit 1
 fi
 
 echo "✅ Deployment completed successfully!"
-echo "🌐 Your app should be available at: http://$DOMAIN"
+echo "🌐 Your app should be available at: https://$DOMAIN"
 echo "📊 Monitor with: pm2 monit"
 echo "📋 View logs with: pm2 logs $APP_NAME"

@@ -96,25 +96,21 @@ const buildMetaEl = document.getElementById("buildMeta");
 if (buildMetaEl) {
   fetch('/meta.json', { cache: 'no-store' })
     .then(res => {
-      console.log('Meta fetch response:', res.status, res.ok);
       return res.ok ? res.json() : null;
     })
     .then(data => {
-      console.log('Meta data:', data);
       const iso = data?.buildTime || document.lastModified;
       const d = new Date(iso);
       const formatted = Number.isNaN(d.getTime()) ? String(iso) : d.toLocaleString();
       buildMetaEl.textContent = ` · ${formatted}`;
-      console.log('Build time set to:', formatted);
     })
     .catch(err => {
-      console.log('Meta fetch failed:', err);
       try {
         const d = new Date(document.lastModified);
-        buildMetaEl.textContent = ` · ${d.toLocaleString()}`;
-        console.log('Using document.lastModified:', d.toLocaleString());
+        const formatted = Number.isNaN(d.getTime()) ? 'Unknown' : d.toLocaleString();
+        buildMetaEl.textContent = ` · ${formatted}`;
       } catch (e) {
-        console.log('Document lastModified failed:', e);
+        buildMetaEl.textContent = ` · ${new Date().toLocaleString()}`;
       }
     });
 }
