@@ -14,9 +14,16 @@ const io = new Server(httpServer, {
 });
 
 const PORT = process.env.PORT || 3000;
+const BUILD_TIME = process.env.BUILD_TIME || new Date().toISOString();
 
 // Serve static client files
 app.use(express.static(path.join(__dirname, "public")));
+
+// Build/meta endpoint to expose latest build time
+app.get('/meta.json', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ buildTime: BUILD_TIME });
+});
 
 // In-memory state (session-persistent while users are connected)
 // Allow longer pen strokes before truncation. This guards memory while avoiding visible truncation.

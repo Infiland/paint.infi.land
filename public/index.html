@@ -9,7 +9,7 @@
   <body>
     <div id="joinOverlay" class="overlay">
       <div class="modal">
-        <h1>Realtime Paint</h1>
+        <h1>paint.infi.land - Realtime Paint</h1>
         <form id="joinForm">
           <label>
             Username
@@ -67,6 +67,10 @@
       <button id="zoomInBtn" class="tool-btn" title="Zoom In" aria-label="Zoom In">+</button>
       <button id="zoomOutBtn" class="tool-btn" title="Zoom Out" aria-label="Zoom Out">−</button>
       <button id="resetViewBtn" class="tool-btn" title="Reset View" aria-label="Reset View">1:1</button>
+    </div>
+
+    <div id="brandHud" class="brand-hud" aria-hidden="true">
+      paint.infi.land<span id="buildMeta" class="build-meta"></span>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>

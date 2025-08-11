@@ -9,11 +9,22 @@ export function setupUI({ joinOverlay, joinForm, usernameInput, colorInput, tool
     if (!name) return;
     state.username = name;
     state.color = col;
+    try { localStorage.setItem('rp_username', state.username); } catch (_) {}
     socket.emit("join", { username: state.username, color: state.color });
     if (colorPicker) colorPicker.value = state.color;
     joinOverlay.style.display = "none";
     socket.emit("requestState");
   });
+
+  // Persist username as the user types so it's reused on refresh
+  if (usernameInput && typeof usernameInput.addEventListener === 'function') {
+    usernameInput.addEventListener('input', (e) => {
+      try {
+        const val = String(e.target.value || '').slice(0, 20);
+        localStorage.setItem('rp_username', val);
+      } catch (_) {}
+    });
+  }
 
   if (toolbar) {
     toolbar.addEventListener("click", (e) => {

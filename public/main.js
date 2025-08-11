@@ -13,6 +13,24 @@ const joinForm = document.getElementById("joinForm");
 const usernameInput = document.getElementById("usernameInput");
 const colorInput = document.getElementById("colorInput");
 
+// Prefill username: reuse saved, else generate humorous with 3 digits
+(function prefillUsername() {
+  if (!usernameInput) return;
+  let saved = null;
+  try { saved = localStorage.getItem('rp_username'); } catch (_) {}
+  if (saved && typeof saved === 'string' && saved.trim()) {
+    usernameInput.value = saved.slice(0, 20);
+    return;
+  }
+  const adjectives = ["Wobbly", "Sneaky", "Sparkly", "Witty", "Fuzzy", "Spicy", "Zany", "Chunky", "Quirky", "Bouncy", "Sassy", "Saucy", "Goofy", "Cheeky", "Wonky"];
+  const nouns = ["Brush", "Doodle", "Pixel", "Noodle", "Squiggle", "Muffin", "Banana", "Potato", "Pickle", "Taco", "Pancake", "Waffle", "Nugget", "Hamster", "Possum"];
+  const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+  const noun = nouns[Math.floor(Math.random() * nouns.length)];
+  const num = Math.floor(100 + Math.random() * 900); // 3 digits
+  const suggestion = `${adj}${noun}${num}`;
+  usernameInput.value = suggestion.slice(0, 20);
+})();
+
 setupCanvases(strokesCanvas, cursorsCanvas, () => {
   // On resize, re-render shapes and cursors
   requestRender();
@@ -78,5 +96,24 @@ window.addEventListener("keydown", (e) => {
     }
   }
 });
+
+// Fetch and display build date in HUD
+const buildMetaEl = document.getElementById("buildMeta");
+if (buildMetaEl) {
+  fetch('/meta.json', { cache: 'no-store' })
+    .then(res => res.ok ? res.json() : null)
+    .then(data => {
+      const iso = data?.buildTime || document.lastModified;
+      const d = new Date(iso);
+      const formatted = Number.isNaN(d.getTime()) ? String(iso) : d.toLocaleString();
+      buildMetaEl.textContent = ` · ${formatted}`;
+    })
+    .catch(() => {
+      try {
+        const d = new Date(document.lastModified);
+        buildMetaEl.textContent = ` · ${d.toLocaleString()}`;
+      } catch {}
+    });
+}
 
 

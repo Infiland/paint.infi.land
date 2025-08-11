@@ -24,10 +24,6 @@ mkdir -p $APP_DIR
 # Navigate to app directory
 cd $APP_DIR
 
-# Create .env file with correct port
-echo "⚙️ Setting up environment..."
-echo "PORT=$PORT" > .env
-echo "NODE_ENV=production" >> .env
 
 # Install dependencies
 echo "📦 Installing application dependencies..."

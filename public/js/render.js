@@ -243,14 +243,21 @@ export function requestRender() {
       if (entry.points.length === 1) drawDot(entry.points[0], entry.color);
       else drawSegment(entry.points, entry.color);
     }
+    // Also update cursors to follow camera changes
+    renderCursors();
   });
 }
 
 export function renderCursors() {
   clearCursorsCanvas();
+  const scale = state.viewScale || 1;
+  const offsetX = state.viewOffsetX || 0;
+  const offsetY = state.viewOffsetY || 0;
   for (const [, cur] of state.remoteCursors) {
     if (typeof cur.x === "number" && typeof cur.y === "number") {
-      drawCursor(cur);
+      const sx = cur.x * scale + offsetX;
+      const sy = cur.y * scale + offsetY;
+      drawCursor({ x: sx, y: sy, color: cur.color, username: cur.username });
     }
   }
 }

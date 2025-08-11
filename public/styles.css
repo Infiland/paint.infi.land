@@ -170,4 +170,24 @@ button:hover { filter: brightness(0.95); }
 .color-wrap input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
 .color-wrap input[type="color"]::-webkit-color-swatch { border: none; border-radius: 6px; }
 
+/* Bottom-left brand HUD */
+.brand-hud {
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  z-index: 40;
+  font-size: 12px;
+  color: var(--muted);
+  background: rgba(17, 24, 39, 0.6);
+  border: 1px solid #374151;
+  border-radius: 8px;
+  padding: 6px 8px;
+  pointer-events: none;
+  backdrop-filter: blur(4px);
+}
+.brand-hud .build-meta {
+  color: #9ca3af;
+  opacity: 0.9;
+}
+
 
