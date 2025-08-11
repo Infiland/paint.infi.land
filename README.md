@@ -36,10 +36,7 @@ A lightweight, real‑time collaborative drawing app powered by Express and Sock
    ```sh
    pnpm start
    ```
-   - Optional: choose a port
-     ```sh
-     PORT=3001 pnpm start
-     ```
+
 3. Open the app
    - Visit `http://localhost:3000` (or your chosen port)
    - Enter a username and pick a color to join
