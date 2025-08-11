@@ -49,13 +49,18 @@ else
     echo "💡 Make sure to initialize git and pull your code first!"
 fi
 
-# Remove node_modules and package-lock for clean install
+# Remove node_modules for clean install
 echo "🧹 Cleaning dependencies..."
-rm -rf node_modules pnpm-lock.yaml
+rm -rf node_modules
 
 # Install dependencies with pnpm
 echo "📦 Installing application dependencies with pnpm..."
-pnpm install --frozen-lockfile
+if [ -f pnpm-lock.yaml ]; then
+  pnpm install --frozen-lockfile
+else
+  echo "⚠️ pnpm-lock.yaml not found; installing without frozen lockfile"
+  pnpm install --no-frozen-lockfile
+fi
 
 # Create/update .env file with proper environment variables
 echo "🔧 Setting up environment variables..."
