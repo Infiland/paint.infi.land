@@ -24,6 +24,7 @@ export function setupSocketHandlers() {
   });
 
   socket.on("cursor", (payload) => {
+    console.log('Received cursor:', payload);
     const entry = state.remoteCursors.get(payload.id) || {};
     entry.x = payload.x;
     entry.y = payload.y;
@@ -31,6 +32,7 @@ export function setupSocketHandlers() {
     entry.username = payload.username || entry.username;
     entry.color = payload.color || entry.color || "#00e5ff";
     state.remoteCursors.set(payload.id, entry);
+    console.log('Remote cursors count:', state.remoteCursors.size);
     renderCursors();
   });
 

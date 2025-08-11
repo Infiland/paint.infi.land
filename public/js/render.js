@@ -253,10 +253,12 @@ export function renderCursors() {
   const scale = state.viewScale || 1;
   const offsetX = state.viewOffsetX || 0;
   const offsetY = state.viewOffsetY || 0;
-  for (const [, cur] of state.remoteCursors) {
+  console.log('Rendering cursors, count:', state.remoteCursors.size, 'scale:', scale, 'offset:', offsetX, offsetY);
+  for (const [id, cur] of state.remoteCursors) {
     if (typeof cur.x === "number" && typeof cur.y === "number") {
       const sx = cur.x * scale + offsetX;
       const sy = cur.y * scale + offsetY;
+      console.log('Rendering cursor:', id, 'at', sx, sy, 'username:', cur.username);
       drawCursor({ x: sx, y: sy, color: cur.color, username: cur.username });
     }
   }

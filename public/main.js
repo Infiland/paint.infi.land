@@ -13,15 +13,9 @@ const joinForm = document.getElementById("joinForm");
 const usernameInput = document.getElementById("usernameInput");
 const colorInput = document.getElementById("colorInput");
 
-// Prefill username: reuse saved, else generate humorous with 3 digits
+// Prefill username: always generate a humorous random suggestion with 3 digits
 (function prefillUsername() {
   if (!usernameInput) return;
-  let saved = null;
-  try { saved = localStorage.getItem('rp_username'); } catch (_) {}
-  if (saved && typeof saved === 'string' && saved.trim()) {
-    usernameInput.value = saved.slice(0, 20);
-    return;
-  }
   const adjectives = ["Wobbly", "Sneaky", "Sparkly", "Witty", "Fuzzy", "Spicy", "Zany", "Chunky", "Quirky", "Bouncy", "Sassy", "Saucy", "Goofy", "Cheeky", "Wonky"];
   const nouns = ["Brush", "Doodle", "Pixel", "Noodle", "Squiggle", "Muffin", "Banana", "Potato", "Pickle", "Taco", "Pancake", "Waffle", "Nugget", "Hamster", "Possum"];
   const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
@@ -101,18 +95,27 @@ window.addEventListener("keydown", (e) => {
 const buildMetaEl = document.getElementById("buildMeta");
 if (buildMetaEl) {
   fetch('/meta.json', { cache: 'no-store' })
-    .then(res => res.ok ? res.json() : null)
+    .then(res => {
+      console.log('Meta fetch response:', res.status, res.ok);
+      return res.ok ? res.json() : null;
+    })
     .then(data => {
+      console.log('Meta data:', data);
       const iso = data?.buildTime || document.lastModified;
       const d = new Date(iso);
       const formatted = Number.isNaN(d.getTime()) ? String(iso) : d.toLocaleString();
       buildMetaEl.textContent = ` · ${formatted}`;
+      console.log('Build time set to:', formatted);
     })
-    .catch(() => {
+    .catch(err => {
+      console.log('Meta fetch failed:', err);
       try {
         const d = new Date(document.lastModified);
         buildMetaEl.textContent = ` · ${d.toLocaleString()}`;
-      } catch {}
+        console.log('Using document.lastModified:', d.toLocaleString());
+      } catch (e) {
+        console.log('Document lastModified failed:', e);
+      }
     });
 }
 
