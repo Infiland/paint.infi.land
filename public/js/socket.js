@@ -1,7 +1,7 @@
 import { state } from "./state.js";
 import { requestRender, renderCursors, invalidateShapeCache, invalidateAllShapeCache } from "./render.js";
 
-export const socket = io({ transports: ["websocket"] });
+export const socket = io();
 
 export function setupSocketHandlers() {
   socket.on("connect", () => {
