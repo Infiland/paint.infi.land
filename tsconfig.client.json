@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "rootDir": "./src",
+    "outDir": "./public",
+    "verbatimModuleSyntax": true
+  },
+  "include": ["src/main.ts", "src/js/**/*.ts", "src/shared/**/*.ts", "src/socket-io-client.d.ts"]
+}
