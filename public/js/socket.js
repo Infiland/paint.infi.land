@@ -1,128 +1,157 @@
+import { DEFAULT_FALLBACK_STROKE_COLOR, } from "../shared/protocol.js";
+import { invalidateAllShapeCache, invalidateShapeCache, renderCursors, requestRender } from "./render.js";
 import { state } from "./state.js";
-import { requestRender, renderCursors, invalidateShapeCache, invalidateAllShapeCache } from "./render.js";
-
+import { publishUiError, requestUiSync } from "./ui-events.js";
 export const socket = io();
-
-export function setupSocketHandlers() {
-  socket.on("connect", () => {
-    state.selfId = socket.id;
-  });
-
-  socket.on("presence", (msg) => {
-    if (msg.type === "join") {
-      state.remoteCursors.set(msg.id, {
-        username: msg.username,
-        color: msg.color,
-        x: null,
-        y: null,
-        down: false,
-      });
-    } else if (msg.type === "leave") {
-      state.remoteCursors.delete(msg.id);
-      renderCursors();
-    }
-  });
-
-  socket.on("cursor", (payload) => {
-    const entry = state.remoteCursors.get(payload.id) || {};
-    entry.x = payload.x;
-    entry.y = payload.y;
-    entry.down = Boolean(payload.down);
-    entry.username = payload.username || entry.username;
-    entry.color = payload.color || entry.color || "#00e5ff";
-    state.remoteCursors.set(payload.id, entry);
-    renderCursors();
-  });
-
-  socket.on("draw", (stroke) => {
-    const entry = state.activeStrokes.get(stroke.id) || { type: "pen", color: stroke.color, points: [] };
-    if (stroke.points && stroke.points.length > 0) {
-      if (entry.points.length === 0 && stroke.points.length === 1) {
-        // single dot handled in render
-      } else {
-        entry.points.push(...stroke.points);
-        entry.color = stroke.color || entry.color;
-        state.activeStrokes.set(stroke.id, entry);
-        requestRender();
-      }
-    }
-  });
-
-  socket.on("drawEnd", ({ id }) => {
-    if (id) {
-      state.activeStrokes.delete(id);
-      requestRender();
-    }
-  });
-
-  socket.on("state", ({ cursors, shapes }) => {
-    state.activeStrokes.clear();
-    state.allShapes.clear();
-    invalidateAllShapeCache();
-    if (Array.isArray(shapes)) {
-      for (const s of shapes) state.allShapes.set(s.id, s);
-    }
-    requestRender();
-    state.remoteCursors.clear();
-    for (const c of cursors) state.remoteCursors.set(c.id, c);
-    renderCursors();
-  });
-
-  socket.on("shapeAdd", (shape) => {
-    state.allShapes.set(shape.id, shape);
-    invalidateShapeCache(shape.id);
-    // If it's my shape and I didn't manually push to undoStack (e.g., redo or remote sync),
-    // ensure the top of redo/undo is consistent. We won't auto-push here to avoid double entries.
-    requestRender();
-  });
-
-  socket.on("shapeDelete", ({ id }) => {
-    if (id) {
-      state.allShapes.delete(id);
-      invalidateShapeCache(id);
-      // Likewise, we only render here; undo/redo stacks are managed on the action origin.
-      requestRender();
-    }
-  });
-
-  socket.on("removeUserShapes", ({ id }) => {
-    if (!id) return;
-    let dirty = false;
-    for (const [sid, shape] of Array.from(state.allShapes.entries())) {
-      if (shape.userId === id) {
-        state.allShapes.delete(sid);
-        invalidateShapeCache(sid);
-        dirty = true;
-      }
-    }
-    if (dirty) requestRender();
-  });
+function isOwnSocket(socketId) {
+    return Boolean(state.selfId && socketId === state.selfId);
 }
-
-export function emitCursor() {
-  if (state.localCursorFrameReq) return;
-  state.localCursorFrameReq = requestAnimationFrame(() => {
-    state.localCursorFrameReq = null;
-    socket.volatile.emit("cursor", {
-      x: state.lastPointer.x,
-      y: state.lastPointer.y,
-      down: state.isPointerDown,
+function upsertRemoteCursor(payload) {
+    const existing = state.remoteCursors.get(payload.id);
+    state.remoteCursors.set(payload.id, {
+        username: payload.username || existing?.username || "Guest",
+        color: payload.color || existing?.color || DEFAULT_FALLBACK_STROKE_COLOR,
+        x: payload.x,
+        y: payload.y,
+        down: Boolean(payload.down),
     });
-  });
 }
-
+export function setupSocketHandlers() {
+    socket.on("connect", () => {
+        state.selfId = socket.id ?? null;
+        if (state.selfId) {
+            state.remoteCursors.delete(state.selfId);
+        }
+        if (state.username) {
+            socket.emit("join", { username: state.username, color: state.color });
+            socket.emit("requestState");
+        }
+        requestUiSync();
+    });
+    socket.on("disconnect", () => {
+        state.selfId = null;
+        requestUiSync();
+    });
+    socket.on("errorMessage", ({ message }) => {
+        publishUiError(message);
+    });
+    socket.on("presence", (message) => {
+        if (message.type === "join") {
+            if (isOwnSocket(message.id)) {
+                requestUiSync();
+                return;
+            }
+            state.remoteCursors.set(message.id, {
+                username: message.username,
+                color: message.color,
+                x: null,
+                y: null,
+                down: false,
+            });
+        }
+        else {
+            state.remoteCursors.delete(message.id);
+        }
+        renderCursors();
+        requestUiSync();
+    });
+    socket.on("cursor", (payload) => {
+        if (isOwnSocket(payload.id)) {
+            return;
+        }
+        upsertRemoteCursor(payload);
+        renderCursors();
+        requestUiSync();
+    });
+    socket.on("draw", (stroke) => {
+        const entry = state.activeStrokes.get(stroke.id) ?? {
+            type: "pen",
+            color: stroke.color,
+            points: [],
+        };
+        if (stroke.points.length > 0) {
+            entry.points.push(...stroke.points);
+            entry.color = stroke.color || entry.color;
+            state.activeStrokes.set(stroke.id, entry);
+            requestRender();
+        }
+    });
+    socket.on("drawEnd", ({ id }) => {
+        state.activeStrokes.delete(id);
+        requestRender();
+    });
+    socket.on("state", ({ cursors, shapes }) => {
+        state.activeStrokes.clear();
+        state.allShapes.clear();
+        invalidateAllShapeCache();
+        for (const shape of shapes) {
+            state.allShapes.set(shape.id, shape);
+        }
+        state.remoteCursors.clear();
+        for (const cursor of cursors) {
+            if (isOwnSocket(cursor.id)) {
+                continue;
+            }
+            upsertRemoteCursor(cursor);
+        }
+        requestRender();
+        renderCursors();
+        requestUiSync();
+    });
+    socket.on("shapeAdd", (shape) => {
+        state.allShapes.set(shape.id, shape);
+        invalidateShapeCache(shape.id);
+        requestRender();
+    });
+    socket.on("shapeDelete", ({ id }) => {
+        state.allShapes.delete(id);
+        invalidateShapeCache(id);
+        requestRender();
+    });
+    socket.on("removeUserShapes", ({ id }) => {
+        let needsRender = false;
+        for (const [shapeId, shape] of Array.from(state.allShapes.entries())) {
+            if (shape.userId !== id) {
+                continue;
+            }
+            state.allShapes.delete(shapeId);
+            invalidateShapeCache(shapeId);
+            needsRender = true;
+        }
+        if (needsRender) {
+            requestRender();
+        }
+    });
+}
+export function emitCursor() {
+    if (state.localCursorFrameReq || !socket.connected) {
+        return;
+    }
+    state.localCursorFrameReq = window.requestAnimationFrame(() => {
+        state.localCursorFrameReq = null;
+        socket.volatile.emit("cursor", {
+            x: state.lastPointer.x,
+            y: state.lastPointer.y,
+            down: state.isPointerDown,
+        });
+    });
+}
 export function startDrawInterval() {
-  if (state.drawIntervalId) return;
-  state.drawIntervalId = setInterval(() => {
-    if (state.pointsBuffer.length === 0) return;
-    socket.emit("draw", { points: state.pointsBuffer.splice(0, state.pointsBuffer.length) });
-  }, 40);
+    if (state.drawIntervalId) {
+        return;
+    }
+    state.drawIntervalId = window.setInterval(() => {
+        if (state.pointsBuffer.length === 0) {
+            return;
+        }
+        socket.emit("draw", { points: state.pointsBuffer.splice(0, state.pointsBuffer.length) });
+    }, 40);
 }
-
 export function stopDrawInterval() {
-  if (!state.drawIntervalId) return;
-  clearInterval(state.drawIntervalId);
-  state.drawIntervalId = null;
+    if (!state.drawIntervalId) {
+        return;
+    }
+    window.clearInterval(state.drawIntervalId);
+    state.drawIntervalId = null;
 }
-
-
+//# sourceMappingURL=socket.js.map

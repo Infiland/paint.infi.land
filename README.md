@@ -2,7 +2,7 @@
 
 ![image](https://i.imgur.com/VFtddNq.jpeg)
 
-A lightweight, real‑time collaborative drawing app powered by Express and Socket.IO. Draw with friends using pen, rectangle, and circle tools; pan and zoom around the canvas; undo/redo your actions; and see everyone’s cursors live.
+A lightweight, real-time collaborative drawing app powered by Express, Socket.IO, and a strict TypeScript codebase. Draw with friends using pen, rectangle, and circle tools; pan and zoom around the canvas; undo or redo your actions; and see everyone’s cursors live.
 
 ## Features
 
@@ -18,8 +18,8 @@ A lightweight, real‑time collaborative drawing app powered by Express and Sock
 
 ## Tech
 
-- Node.js (>=16), Express, Socket.IO
-- Vanilla JS + Canvas 2D API
+- Node.js (>=18), Express, Socket.IO
+- TypeScript + Canvas 2D API
 
 ## Requirements
 
@@ -32,14 +32,26 @@ A lightweight, real‑time collaborative drawing app powered by Express and Sock
    ```sh
    pnpm install
    ```
-2. Start the server (defaults to PORT 3000)
+2. Build the server and browser bundle
+   ```sh
+   pnpm build
+   ```
+3. Start the server (defaults to PORT 3000)
    ```sh
    pnpm start
    ```
 
-3. Open the app
-   - Visit `http://localhost:3000` (or your chosen port)
-   - Enter a username and pick a color to join
+4. Open the app
+    - Visit `http://localhost:3000` (or your chosen port)
+    - Enter a username and pick a color to join
+
+## Project layout
+
+- `src/server.ts`: typed Express and Socket.IO server
+- `src/main.ts`: browser entrypoint
+- `src/js/*.ts`: client modules for canvas, tools, rendering, socket, and UI
+- `src/shared/protocol.ts`: shared runtime constants and socket payload types
+- `public/index.html` and `public/styles.css`: static shell and styling
 
 ### How to use
 

@@ -18,6 +18,12 @@ coverage/
 .cache/
 tmp/
 .tmp/
+public/main.js
+public/main.js.map
+public/js/**/*.js
+public/js/**/*.js.map
+public/shared/**/*.js
+public/shared/**/*.js.map
 
 # OS / editor
 .DS_Store

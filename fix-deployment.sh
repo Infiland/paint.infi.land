@@ -25,13 +25,17 @@ NODE_ENV=production
 BUILD_TIME=$BUILD_TIME
 EOF
 
+# Build server and browser assets
+echo "🏗️ Building TypeScript application..."
+pnpm build
+
 # Clear PM2 logs
 echo "🧹 Clearing PM2 logs..."
 pm2 flush
 
 # Start fresh
 echo "🚀 Starting application..."
-pm2 start server.js --name "$APP_NAME" --cwd "$(pwd)" --update-env
+pm2 start dist/server.js --name "$APP_NAME" --cwd "$(pwd)" --update-env
 
 # Save PM2 configuration
 pm2 save
